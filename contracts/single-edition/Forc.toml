@@ -1,0 +1,7 @@
+[project]
+authors = ["EREGHA THOMPSON"]
+entry = "main.sw"
+license = "Apache-2.0"
+name = "single-edition"
+
+[dependencies]
