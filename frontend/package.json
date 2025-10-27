@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "fuels": "0.101.3",
     "next": "16.0.0",
     "postcss": "^8.5.6",
