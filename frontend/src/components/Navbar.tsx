@@ -54,10 +54,10 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Wallet Connector */}
+          {/* Wallet Connector
           <div className="flex items-center">
             <WalletConnector />
-          </div>
+          </div> */}
 
           {/* Mobile menu button */}
           <div className="md:hidden">
