@@ -8,13 +8,9 @@ import {
   CollectionFactory,
   SingleEditionFactory
 } from './index';
-import { Provider, Wallet } from 'fuels';
-
-// Initialize provider (connect to Fuel network)
-const provider = new Provider('https://beta-3.fuel.network');
 
 // Example: Connect to deployed Factory contract
-export async function connectToFactory(wallet: Wallet) {
+export async function connectToFactory(provider: any, wallet: any) {
   // Factory contract address should be stored in .env
   const factoryAddress = process.env.NEXT_PUBLIC_FACTORY_ADDRESS || '0x...';
   
@@ -23,32 +19,33 @@ export async function connectToFactory(wallet: Wallet) {
 }
 
 // Example: Deploy a new Collection NFT contract
-export async function deployCollectionContract(wallet: Wallet) {
+export async function deployCollectionContract(wallet: any) {
   // Create a factory instance for deploying
   const factory = new CollectionFactory(wallet);
   
-  // Deploy the contract with configurable parameters
-  const collection = await factory.deployContract({
-    maxSupply: 10000,
-    mintFee: 100000,
-  });
-  
-  return collection;
+  try {
+    // Deploy contract with configurable parameters
+    const collection = await factory.deploy();
+    return collection;
+  } catch (error) {
+    console.error('Failed to deploy collection contract:', error);
+    throw error;
+  }
 }
 
 // Example: Deploy a new Single Edition NFT contract
-export async function deploySingleEditionContract(wallet: Wallet) {
+export async function deploySingleEditionContract(wallet: any) {
   // Create a factory instance for deploying
   const factory = new SingleEditionFactory(wallet);
   
-  // Deploy the contract with configurable parameters
-  const singleEdition = await factory.deployContract({
-    maxSupply: 10000,
-    mintFee: 100000,
-    metadataUri: 'ipfs://Qm...',
-  });
-  
-  return singleEdition;
+  try {
+    // Deploy contract with configurable parameters
+    const singleEdition = await factory.deploy();
+    return singleEdition;
+  } catch (error) {
+    console.error('Failed to deploy single edition contract:', error);
+    throw error;
+  }
 }
 
 // Example: Register a deployment with Factory contract
@@ -58,8 +55,11 @@ export async function registerDeployment(
   deploymentType: number // 0 for single edition, 1 for collection
 ) {
   try {
-    const tx = await factory.register_deployment(contractId, deploymentType);
-    const result = await tx.waitForResult();
+    // Convert contract ID to the correct format
+    const contractIdInput = { bits: contractId };
+    
+    const tx = await factory.functions.register_deployment(contractIdInput, deploymentType);
+    const result = await tx.get();
     return result;
   } catch (error) {
     console.error('Failed to register deployment:', error);
@@ -74,8 +74,11 @@ export async function mintCollectionNFT(
   metadataUri: string
 ) {
   try {
-    const tx = await collection.mint(recipientAddress, metadataUri);
-    const result = await tx.waitForResult();
+    // Convert address to the correct format
+    const recipientInput = { Address: { bits: recipientAddress } };
+    
+    const tx = await collection.functions.mint(recipientInput, metadataUri);
+    const result = await tx.get();
     return result;
   } catch (error) {
     console.error('Failed to mint NFT:', error);
@@ -90,8 +93,11 @@ export async function mintSingleEditionNFTs(
   amount: number
 ) {
   try {
-    const tx = await singleEdition.mint(recipientAddress, amount);
-    const result = await tx.waitForResult();
+    // Convert address to the correct format
+    const recipientInput = { Address: { bits: recipientAddress } };
+    
+    const tx = await singleEdition.functions.mint(recipientInput, amount);
+    const result = await tx.get();
     return result;
   } catch (error) {
     console.error('Failed to mint NFTs:', error);
@@ -102,8 +108,8 @@ export async function mintSingleEditionNFTs(
 // Example: Get deployment info from Factory
 export async function getDeploymentInfo(factory: Factory, deploymentId: number) {
   try {
-    const [deployer, contractId, deploymentType] = await factory.get_deployment_info(deploymentId);
-    return { deployer, contractId, deploymentType };
+    const result = await factory.functions.get_deployment_info(deploymentId);
+    return result;
   } catch (error) {
     console.error('Failed to get deployment info:', error);
     throw error;
@@ -116,8 +122,8 @@ export async function getNFTOwner(
   tokenId: number
 ) {
   try {
-    const owner = await contract.owner_of(tokenId);
-    return owner;
+    const result = await contract.functions.owner_of(tokenId);
+    return result;
   } catch (error) {
     console.error('Failed to get NFT owner:', error);
     throw error;
@@ -130,8 +136,8 @@ export async function getNFTMetadata(
   tokenId: number
 ) {
   try {
-    const uri = await collection.token_uri(tokenId);
-    return uri;
+    const result = await collection.functions.token_uri(tokenId);
+    return result;
   } catch (error) {
     console.error('Failed to get NFT metadata:', error);
     throw error;
@@ -141,10 +147,51 @@ export async function getNFTMetadata(
 // Example: Get Single Edition metadata URI
 export async function getSingleEditionMetadata(singleEdition: SingleEdition) {
   try {
-    const uri = await singleEdition.metadata_uri();
-    return uri;
+    const result = await singleEdition.functions.metadata_uri();
+    return result;
   } catch (error) {
     console.error('Failed to get Single Edition metadata:', error);
+    throw error;
+  }
+}
+
+// Example: Get total supply
+export async function getTotalSupply(contract: Collection | SingleEdition) {
+  try {
+    const result = await contract.functions.total_supply();
+    return result;
+  } catch (error) {
+    console.error('Failed to get total supply:', error);
+    throw error;
+  }
+}
+
+// Example: Get max supply
+export async function getMaxSupply(contract: Collection | SingleEdition) {
+  try {
+    const result = await contract.functions.max_supply();
+    return result;
+  } catch (error) {
+    console.error('Failed to get max supply:', error);
+    throw error;
+  }
+}
+
+// Example: Transfer NFT
+export async function transferNFT(
+  contract: Collection | SingleEdition,
+  recipientAddress: string,
+  tokenId: number
+) {
+  try {
+    // Convert address to the correct format
+    const recipientInput = { Address: { bits: recipientAddress } };
+    
+    const tx = await contract.functions.transfer(recipientInput, tokenId);
+    const result = await tx.get();
+    return result;
+  } catch (error) {
+    console.error('Failed to transfer NFT:', error);
     throw error;
   }
 }
